@@ -1,11 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:school_app/api_repository.dart';
 import 'package:school_app/custom_app_bar.dart';
+import 'package:school_app/dashboard.dart';
 import 'package:school_app/input_decorations.dart';
+import 'package:school_app/login_response.dart';
 import 'package:school_app/my_theme.dart';
 import 'package:school_app/scan_code.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StudentDetails extends StatefulWidget {
   const StudentDetails(
@@ -32,6 +38,8 @@ class _StudentDetailsState extends State<StudentDetails> {
   final parentContactController = TextEditingController();
   BuildContext? loadingContext;
   String successStatus = '';
+  Role? _selectedRole;
+  List<Role> roles = [];
 
   @override
   void initState() {
@@ -43,6 +51,17 @@ class _StudentDetailsState extends State<StudentDetails> {
     schoolController.text = widget.school;
     parentNameController.text = widget.parentName;
     parentContactController.text = widget.parentContact;
+    getRoles();
+  }
+
+  getRoles() async {
+    final prefs = await SharedPreferences.getInstance();
+    var encodedRoles = prefs.getString('roles');
+    var decodedRoles = jsonDecode(encodedRoles!);
+    setState(() {
+      roles = List<Role>.from(decodedRoles.map((x) => Role.fromJson(x)));
+      _selectedRole = roles[0];
+    });
   }
 
   @override
@@ -157,15 +176,62 @@ class _StudentDetailsState extends State<StudentDetails> {
                   ],
                 ),
               ),
+              const Text(
+                'Select Status',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w300,
+                  fontSize: 16,
+                ),
+              ),
+              ...roles.map(
+                (role) => ListTile(
+                  title: Text(role.role.replaceAll('_', ' ')),
+                  leading: Radio(
+                    activeColor: Colors.red,
+                    value: role,
+                    groupValue: _selectedRole,
+                    onChanged: (Role? value) {
+                      setState(() {
+                        _selectedRole = value!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              // ListTile(
+              //   title: const Text('Pick Up'),
+              //   leading: Radio(
+              //     value: BestTutorSite.javatpoint,
+              //     groupValue: _site,
+              //     onChanged: (BestTutorSite? value) {
+              //       setState(() {
+              //         _site = value!;
+              //       });
+              //     },
+              //   ),
+              // ),
+              // ListTile(
+              //   title: const Text('Drop Off'),
+              //   leading: Radio(
+              //     value: BestTutorSite.w3schools,
+              //     groupValue: _site,
+              //     onChanged: (BestTutorSite? value) {
+              //       setState(() {
+              //         _site = value!;
+              //       });
+              //     },
+              //   ),
+              // ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 30.0),
                     child: Container(
                       height: 45,
                       child: FlatButton(
-                          minWidth: MediaQuery.of(context).size.width / 2.5,
+                          minWidth: MediaQuery.of(context).size.width / 1.5,
                           disabledColor: MyTheme.grey_153,
                           //height: 50,
                           color: MyTheme.accent_color,
@@ -209,53 +275,36 @@ class _StudentDetailsState extends State<StudentDetails> {
   }
 
   onSubmit() async {
-    // ignore: use_build_context_synchronously
-    showToast(context, 'Student status updated successfully');
-    // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-      return const ScanCode('Scan Code');
-    }));
+    final prefs = await SharedPreferences.getInstance();
+    var rng = new Random();
+    var code = rng.nextInt(900000) + 100000;
+    var studentUsername = widget.number;
+    var studentStatus = _selectedRole?.role;
+    var performedByUsername = prefs.getString('phoneNumber')!;
+    var appRef = code.toString();
 
-    // Navigator.push(context, MaterialPageRoute(builder: (context) {
-    //   return AuthorizeTransaction(
-    //     '13263903dbbdbbdbdd',
-    //     widget.serviceName,
-    //   );
-    // }));
-
-    // loading();
-    // var paymentResponse = await PaymentService().paymentResponse(
-    //   widget.toAccount,
-    //   widget.fromAccount,
-    //   widget.transactionAmount,
-    //   widget.narration,
-    //   widget.serviceName,
-    //   widget.senderName,
-    //   widget.receiverName,
-    // );
-    // Navigator.of(loadingContext!).pop();
-
-    // if (paymentResponse.status == 'PENDING') {
-    //   // ignore: use_build_context_synchronously
-    //   showToast(context, paymentResponse.message);
-    //   // ignore: use_build_context_synchronously
-    //   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-    //     return CheckStatusPage(paymentResponse.appTransactionId);
-    //   }));
-    // } else {
-    //   // ignore: use_build_context_synchronously
-    //   showToast(context, paymentResponse.message);
-    //   // ignore: use_build_context_synchronously
-    //   Navigator.push(context, MaterialPageRoute(builder: (context) {
-    //     return AuthorizeTransaction(
-    //       paymentResponse.transactionId,
-    //       widget.serviceName,
-    //       successStatus,
-    //       paymentResponse.appTransactionId,
-    //     );
-    //   }));
-    // }
+    print(studentUsername);
+    print(studentStatus);
+    print(performedByUsername);
+    print(appRef);
+    loading();
+    var studentResponse = await ApiRepository().sendNotificationResponse(
+        studentUsername, studentStatus!, performedByUsername, appRef);
+    Navigator.of(loadingContext!).pop();
+    if (studentResponse.message != null) {
+      // ignore: use_build_context_synchronously
+      showToast(context, studentResponse.message!);
+      return;
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, 'Notification sent successfully');
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+      // ignore: use_build_context_synchronously
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+        return const DashboardPage(title: 'Dashboard');
+      }));
+    }
   }
 
   loading() {
@@ -285,3 +334,5 @@ class _StudentDetailsState extends State<StudentDetails> {
     // }));
   }
 }
+
+enum BestTutorSite { javatpoint, w3schools, tutorialandexample }

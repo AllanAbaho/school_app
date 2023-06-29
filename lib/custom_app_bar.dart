@@ -18,6 +18,7 @@ class CustomAppBar extends StatelessWidget {
           child: Icon(icon),
         ),
       ],
+      backgroundColor: Colors.red,
     );
   }
 }
@@ -49,7 +50,7 @@ Widget buildDescription(String title,
       Text(
         title,
         style: TextStyle(
-            color: Colors.blue,
+            color: Colors.red,
             fontSize: 25,
             height: 2,
             fontWeight: FontWeight.w300),

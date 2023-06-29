@@ -4,7 +4,7 @@ import 'package:school_app/app_colors.dart';
 class MyTheme {
   /*configurable colors stars*/
   // static Color accent_color = Color.fromRGBO(230,46,4, 1);
-  static Color accent_color = AppColors.brandColor;
+  static Color accent_color = Colors.red;
   static Color accent_color_shadow =
       Color.fromRGBO(229, 65, 28, .40); // this color is a dropshadow of
   static Color soft_accent_color = Color.fromRGBO(254, 234, 209, 1);

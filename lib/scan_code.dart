@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:school_app/api_repository.dart';
 import 'package:school_app/custom_app_bar.dart';
 import 'package:school_app/student_details.dart';
 
@@ -123,7 +124,7 @@ class _ScanCodeState extends State<ScanCode> {
             padding: const EdgeInsets.all(20.0),
             child: MediumText(
               'Scan Code',
-              color: Colors.blue,
+              color: Colors.red,
             ),
           ),
         )
@@ -148,22 +149,31 @@ class _ScanCodeState extends State<ScanCode> {
   }
 
   onSubmit(result) async {
-    final number = result.code.split('-')[0];
-    final name = result.code.split('-')[1];
-    final className = result.code.split('-')[2];
-    final school = result.code.split('-')[3];
-    final parentName = result.code.split('-')[4];
-    final parentContact = result.code.split('-')[5];
-
-    // var account = 'ScanCode';
-    // var narration = 'Merchant payment';
-    // var serviceName = 'WALLET_SCAN_TO_PAY';
-    // loading();
-
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return StudentDetails(
-          number, name, className, school, parentName, parentContact);
-    }));
+    final studentNumber = result.code.split('-')[0];
+    loading();
+    var studentResponse =
+        await ApiRepository().getStudentResponse(studentNumber);
+    Navigator.of(loadingContext!).pop();
+    if (studentResponse.message != null) {
+      // ignore: use_build_context_synchronously
+      showToast(context, studentResponse.message!);
+      return;
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, 'Scan Successful');
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+      // ignore: use_build_context_synchronously
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return StudentDetails(
+            studentResponse.username!,
+            studentResponse.name!,
+            studentResponse.studentClass!,
+            studentResponse.studentSchool!,
+            studentResponse.guardianName!,
+            studentResponse.guardianPhoneNumber!);
+      }));
+    }
   }
 
   loading() {
