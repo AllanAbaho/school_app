@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:school_app/dashboard.dart';
 import 'package:school_app/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  await Future.delayed(const Duration(milliseconds: 300));
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  await Future.delayed(const Duration(milliseconds: 3000));
 
   runApp(
     const MyApp(),

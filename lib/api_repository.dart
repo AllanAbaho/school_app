@@ -22,6 +22,7 @@ class ApiRepository {
               "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
         },
         body: postBody);
+    print(response.body);
 
     return loginResponseFromJson(response.body);
   }

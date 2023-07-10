@@ -1,0 +1,3 @@
+flutter_native_splash:
+  image: assets/launcher_icon.png
+  color: "#f7f7f7"

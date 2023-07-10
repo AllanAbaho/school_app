@@ -36,6 +36,8 @@ dependencies:
   qr_code_scanner: ^1.0.1
   shared_preferences: ^2.0.8
   http: ^0.13.5
+  flutter_native_splash: 2.2.9
+  cached_network_image: ^3.2.1
 
 dev_dependencies:
   flutter_test:

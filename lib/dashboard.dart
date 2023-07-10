@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:school_app/app_colors.dart';
 import 'package:school_app/custom_app_bar.dart';
 import 'package:school_app/enter_number.dart';
@@ -24,19 +26,22 @@ class _DashboardPageState extends State<DashboardPage> {
   final nameController = TextEditingController();
   final schoolController = TextEditingController();
   final numberController = TextEditingController();
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    FlutterNativeSplash.remove();
+
     getPrefs();
   }
 
   getPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    nameController.text = prefs.getString('name')!;
-    schoolController.text = prefs.getString('school')!;
-    numberController.text = prefs.getString('phoneNumber')!;
+    setState(() {
+      nameController.text = prefs.getString('name')!;
+      schoolController.text = prefs.getString('school')!;
+      numberController.text = prefs.getString('phoneNumber')!;
+    });
   }
 
   @override
@@ -46,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: PreferredSize(
           preferredSize: Size(screenWidth, 60),
-          child: const CustomAppBar('Dashboard', Icons.person)),
+          child: CustomAppBar(schoolController.text, Icons.person)),
       body: Padding(
         padding: const EdgeInsets.only(top: 8.0),
         child: buildBody(),
@@ -267,9 +272,9 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            buildDescription('Dashboard',
-                description: 'Please go ahead and scan the student cards'),
-            creditForm(),
+            // buildDescription('Dashboard',
+            //     description: 'Please go ahead and scan the student cards'),
+            profilePage(),
           ],
         ),
       ),
@@ -321,6 +326,112 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             }));
           }),
+    );
+  }
+
+  Widget profilePage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // ClipRRect(
+        //   borderRadius: BorderRadius.all(Radius.circular(1000)),
+        //   child: Image.network(
+        //     'https://img.freepik.com/free-vector/gradient-high-school-logo-design_23-2149626932.jpg',
+        //     width: 150,
+        //   ),
+        // ),
+        ClipRRect(
+          borderRadius: BorderRadius.all(Radius.circular(1000)),
+          child: CachedNetworkImage(
+            imageUrl:
+                'https://img.freepik.com/free-vector/gradient-high-school-logo-design_23-2149626932.jpg',
+            fit: BoxFit.cover,
+            height: 150,
+            width: 150,
+            placeholder: (context, url) => const CircularProgressIndicator(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 20.0),
+          child: Text(
+            nameController.text,
+            style: TextStyle(
+              fontSize: 25,
+              color: MyTheme.accent_color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 20.0),
+          child: Text(
+            numberController.text,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w300,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              statistics('29', 'Dropped Off'),
+              statistics('29', 'Picked'),
+              statistics('58', 'Total'),
+            ],
+          ),
+        ),
+        // Padding(
+        //   padding: const EdgeInsets.only(top: 30.0),
+        //   child: scanButton(context),
+        // ),
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 20.0),
+        //   child: manualButton(context),
+        // ),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 30.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              scanButton(context),
+              manualButton(context),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Column statistics(String amount, String metric) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Text(
+            amount,
+            style: TextStyle(
+              fontSize: 20,
+              // color: MyTheme.accent_color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Text(
+            metric,
+            style: TextStyle(
+              // color: Colors.grey,
+              fontSize: 15,
+              fontWeight: FontWeight.w300,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

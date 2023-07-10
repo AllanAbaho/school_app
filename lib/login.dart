@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:school_app/app_colors.dart';
 import 'package:school_app/api_repository.dart';
 import 'package:school_app/custom_app_bar.dart';
@@ -29,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    FlutterNativeSplash.remove();
   }
 
   @override
@@ -195,6 +197,7 @@ class _LoginPageState extends State<LoginPage> {
       prefs.setString('name', loginResponse.name!);
       prefs.setString('school', loginResponse.schoolName!);
       prefs.setString('phoneNumber', loginResponse.phoneNumber!);
+      prefs.setString('userType', loginResponse.userType!);
       prefs.setString('roles', jsonEncode(roles));
 
       showToast(context, 'Login Successful');
