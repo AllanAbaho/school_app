@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:school_app/api_repository.dart';
 import 'package:school_app/custom_app_bar.dart';
+import 'package:school_app/my_theme.dart';
 import 'package:school_app/student_details.dart';
 
 class ScanCode extends StatefulWidget {
@@ -183,8 +184,10 @@ class _ScanCodeState extends State<ScanCode> {
           loadingContext = context;
           return AlertDialog(
               content: Row(
-            children: const [
-              CircularProgressIndicator(),
+            children: [
+              CircularProgressIndicator(
+                color: MyTheme.accent_color,
+              ),
               SizedBox(
                 width: 10,
               ),

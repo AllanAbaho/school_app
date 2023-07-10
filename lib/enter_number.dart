@@ -158,8 +158,10 @@ class _EnterNumberState extends State<EnterNumber> {
           loadingContext = context;
           return AlertDialog(
               content: Row(
-            children: const [
-              CircularProgressIndicator(),
+            children: [
+              CircularProgressIndicator(
+                color: MyTheme.accent_color,
+              ),
               SizedBox(
                 width: 10,
               ),

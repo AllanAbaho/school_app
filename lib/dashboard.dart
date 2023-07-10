@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:school_app/api_repository.dart';
 import 'package:school_app/app_colors.dart';
 import 'package:school_app/custom_app_bar.dart';
 import 'package:school_app/enter_number.dart';
@@ -11,6 +12,7 @@ import 'package:school_app/input_decorations.dart';
 import 'package:school_app/login_response.dart';
 import 'package:school_app/my_theme.dart';
 import 'package:school_app/scan_code.dart';
+import 'package:school_app/statistics_response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -26,6 +28,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final nameController = TextEditingController();
   final schoolController = TextEditingController();
   final numberController = TextEditingController();
+
+  List<Stat> stats = [];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -42,6 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
       schoolController.text = prefs.getString('school')!;
       numberController.text = prefs.getString('phoneNumber')!;
     });
+    getStatistics();
   }
 
   @override
@@ -64,6 +70,14 @@ class _DashboardPageState extends State<DashboardPage> {
             _showLogOutDialog();
           }),
     );
+  }
+
+  getStatistics() async {
+    var statsResponse =
+        await ApiRepository().getStatistics(numberController.text);
+    setState(() {
+      stats = statsResponse.stats!;
+    });
   }
 
   _showLogOutDialog() {
@@ -348,7 +362,9 @@ class _DashboardPageState extends State<DashboardPage> {
             fit: BoxFit.cover,
             height: 150,
             width: 150,
-            placeholder: (context, url) => const CircularProgressIndicator(),
+            placeholder: (context, url) => CircularProgressIndicator(
+              color: MyTheme.accent_color,
+            ),
           ),
         ),
         Padding(
@@ -374,14 +390,19 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              statistics('29', 'Dropped Off'),
-              statistics('29', 'Picked'),
-              statistics('58', 'Total'),
-            ],
-          ),
+          child: stats.isNotEmpty
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: stats
+                      .map(
+                        (stat) => statistics(
+                            stat.dateCount, stat.role.replaceAll('_', ' ')),
+                      )
+                      .toList(),
+                )
+              : CircularProgressIndicator(
+                  color: MyTheme.accent_color,
+                ),
         ),
         // Padding(
         //   padding: const EdgeInsets.only(top: 30.0),
@@ -406,13 +427,13 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Column statistics(String amount, String metric) {
+  Widget statistics(int amount, String metric) {
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 20),
           child: Text(
-            amount,
+            '$amount',
             style: TextStyle(
               fontSize: 20,
               // color: MyTheme.accent_color,

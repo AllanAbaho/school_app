@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:school_app/login_response.dart';
 import 'package:school_app/send_notification.dart';
+import 'package:school_app/statistics_response.dart';
 import 'package:school_app/student_response.dart';
 
 class ApiRepository {
@@ -60,5 +61,16 @@ class ApiRepository {
         body: postBody);
 
     return notificationResponseFromJson(response.body);
+  }
+
+  Future<StatisticsResponse> getStatistics(String studentUsername) async {
+    Uri url = Uri.parse("$schoolAPI/events/username/$studentUsername");
+
+    final response = await http.get(url, headers: {
+      "Content-Type": "application/json",
+      "Authorization":
+          "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
+    });
+    return statisticsResponseFromJson(response.body);
   }
 }

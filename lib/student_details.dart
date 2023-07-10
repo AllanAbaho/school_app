@@ -314,8 +314,10 @@ class _StudentDetailsState extends State<StudentDetails> {
           loadingContext = context;
           return AlertDialog(
               content: Row(
-            children: const [
-              CircularProgressIndicator(),
+            children: [
+              CircularProgressIndicator(
+                color: MyTheme.accent_color,
+              ),
               SizedBox(
                 width: 10,
               ),
