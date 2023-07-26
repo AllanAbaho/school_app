@@ -7,6 +7,7 @@ import 'package:school_app/login_response.dart';
 import 'package:school_app/send_notification.dart';
 import 'package:school_app/statistics_response.dart';
 import 'package:school_app/student_response.dart';
+import 'package:school_app/trip_response.dart';
 
 class ApiRepository {
   Future<LoginResponse> getLoginResponse(String username, String pin) async {
@@ -72,5 +73,36 @@ class ApiRepository {
           "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
     });
     return statisticsResponseFromJson(response.body);
+  }
+
+  Future<TripResponse> createTrip(String username, tripType) async {
+    Uri url = Uri.parse("$schoolAPI/trip");
+    var postBody = jsonEncode(
+        {"username": username, "tripType": tripType, "note": 'TESTING'});
+
+    final response = await http.post(url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization":
+              "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
+        },
+        body: postBody);
+
+    return tripResponseFromJson(response.body);
+  }
+
+  Future<TripResponse> checkTripStatus(String username) async {
+    Uri url = Uri.parse("$schoolAPI/trip/$username");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization":
+            "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
+      },
+    );
+
+    return tripResponseFromJson(response.body);
   }
 }

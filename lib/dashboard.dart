@@ -30,6 +30,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final numberController = TextEditingController();
 
   List<Stat> stats = [];
+  String tripStatus = 'NOT_STARTED';
+
+  BuildContext? loadingContext;
 
   @override
   void initState() {
@@ -38,6 +41,7 @@ class _DashboardPageState extends State<DashboardPage> {
     FlutterNativeSplash.remove();
 
     getPrefs();
+    checkTripStatus();
   }
 
   getPrefs() async {
@@ -78,6 +82,35 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       stats = statsResponse.stats!;
     });
+  }
+
+  createTrip(String tripType) async {
+    loading();
+
+    var createTripResponse =
+        await ApiRepository().createTrip(numberController.text, tripType);
+    Navigator.of(loadingContext!).pop();
+    if (createTripResponse.message != null) {
+      // ignore: use_build_context_synchronously
+      showToast(context, createTripResponse.message!);
+      return;
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, 'Trip created successfully!');
+      setState(() {
+        tripStatus = createTripResponse.tripStatus!;
+      });
+    }
+  }
+
+  checkTripStatus() async {
+    var createTripResponse =
+        await ApiRepository().checkTripStatus(numberController.text);
+    if (createTripResponse.message == null) {
+      setState(() {
+        tripStatus = createTripResponse.tripStatus!;
+      });
+    }
   }
 
   _showLogOutDialog() {
@@ -166,117 +199,88 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget creditForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
+  _chooseTripTypeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Container(
+          height: 100,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  'Account Number',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w300,
-                    fontSize: 16,
-                  ),
+              const Text(
+                'Choose Trip Type',
+                style: TextStyle(
+                  fontSize: 16,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 25.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      height: 36,
-                      child: TextField(
-                        readOnly: true,
-                        keyboardType: TextInputType.number,
-                        controller: numberController,
-                        autofocus: false,
-                        decoration: InputDecorations.buildInputDecoration_1(
-                            icon: Icons.abc),
+              const Divider(
+                color: Color.fromRGBO(133, 186, 51, 1),
+              ),
+              Column(
+                children: [
+                  Row(
+                    // ignore: prefer_const_literals_to_create_immutables
+                    children: [
+                      const Flexible(
+                        child: Text(
+                          'Please choose one of the options below?',
+                          style: TextStyle(
+                            fontSize: 13,
+                          ),
+                          softWrap: true,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  'Account Name',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w300,
-                    fontSize: 16,
+                    ],
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 25.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      height: 36,
-                      child: TextField(
-                        readOnly: true,
-                        keyboardType: TextInputType.phone,
-                        controller: nameController,
-                        autofocus: false,
-                        decoration: InputDecorations.buildInputDecoration_1(
-                            icon: Icons.numbers),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  'School Name',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w300,
-                    fontSize: 16,
+                  SizedBox(
+                    height: 20,
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 55.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      height: 36,
-                      child: TextField(
-                        readOnly: true,
-                        keyboardType: TextInputType.number,
-                        controller: schoolController,
-                        autofocus: false,
-                        decoration: InputDecorations.buildInputDecoration_1(
-                            icon: Icons.numbers),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await createTrip('PICK_UP');
+                        },
+                        child: const Text(
+                          'PICK UP',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: Colors.black,
+                      ),
+                      GestureDetector(
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await createTrip('DROP_OFF');
+                        },
+                        child: const Text(
+                          'DROP OFF',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color.fromRGBO(133, 186, 51, 1),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
               ),
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    scanButton(context),
-                    manualButton(context),
-                  ],
-                ),
-              )
             ],
           ),
-        )
-      ],
+        ),
+      ),
     );
   }
 
@@ -286,8 +290,6 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // buildDescription('Dashboard',
-            //     description: 'Please go ahead and scan the student cards'),
             profilePage(),
           ],
         ),
@@ -302,7 +304,7 @@ class _DashboardPageState extends State<DashboardPage> {
           minWidth: MediaQuery.of(context).size.width / 2.5,
           disabledColor: MyTheme.grey_153,
           //height: 50,
-          color: MyTheme.accent_color,
+          color: Colors.blue,
           shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(6.0))),
           child: const Text(
@@ -343,17 +345,50 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Container startTrip(BuildContext context) {
+    return Container(
+      height: 45,
+      child: FlatButton(
+          minWidth: MediaQuery.of(context).size.width / 1.09,
+          disabledColor: MyTheme.grey_153,
+          //height: 50,
+          color: Colors.green,
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(6.0))),
+          child: const Text(
+            'Start Trip',
+            style: TextStyle(
+                color: Colors.white, fontSize: 14, fontWeight: FontWeight.w300),
+          ),
+          onPressed: () {
+            _chooseTripTypeDialog();
+          }),
+    );
+  }
+
+  Container endTrip(BuildContext context) {
+    return Container(
+      height: 45,
+      child: FlatButton(
+          minWidth: MediaQuery.of(context).size.width / 1.09,
+          disabledColor: MyTheme.grey_153,
+          //height: 50,
+          color: Colors.red,
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(6.0))),
+          child: const Text(
+            'End Trip',
+            style: TextStyle(
+                color: Colors.white, fontSize: 14, fontWeight: FontWeight.w300),
+          ),
+          onPressed: () {}),
+    );
+  }
+
   Widget profilePage() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // ClipRRect(
-        //   borderRadius: BorderRadius.all(Radius.circular(1000)),
-        //   child: Image.network(
-        //     'https://img.freepik.com/free-vector/gradient-high-school-logo-design_23-2149626932.jpg',
-        //     width: 150,
-        //   ),
-        // ),
         ClipRRect(
           borderRadius: BorderRadius.all(Radius.circular(1000)),
           child: CachedNetworkImage(
@@ -404,22 +439,37 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: MyTheme.accent_color,
                 ),
         ),
-        // Padding(
-        //   padding: const EdgeInsets.only(top: 30.0),
-        //   child: scanButton(context),
-        // ),
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(vertical: 20.0),
-        //   child: manualButton(context),
-        // ),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 30.0),
+        Visibility(
+          visible: tripStatus == 'OPEN',
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 30.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                scanButton(context),
+                manualButton(context),
+              ],
+            ),
+          ),
+        ),
+        Visibility(
+          visible: tripStatus == 'NOT_STARTED' || tripStatus == 'ENDED',
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              scanButton(context),
-              manualButton(context),
+              startTrip(context),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 20,
+        ),
+        Visibility(
+          visible: tripStatus == 'IN_PROGRESS',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              endTrip(context),
             ],
           ),
         )
@@ -454,5 +504,25 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ],
     );
+  }
+
+  loading() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          loadingContext = context;
+          return AlertDialog(
+              content: Row(
+            children: [
+              CircularProgressIndicator(
+                color: MyTheme.accent_color,
+              ),
+              SizedBox(
+                width: 10,
+              ),
+              Text("Loading..."),
+            ],
+          ));
+        });
   }
 }
