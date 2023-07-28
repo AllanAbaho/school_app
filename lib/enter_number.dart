@@ -11,9 +11,11 @@ import 'package:school_app/student_details.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EnterNumber extends StatefulWidget {
-  const EnterNumber({Key? key, required this.title}) : super(key: key);
+  const EnterNumber({Key? key, required this.title, required this.tripId})
+      : super(key: key);
 
   final String title;
+  final int tripId;
 
   @override
   State<EnterNumber> createState() => _EnterNumberState();
@@ -141,12 +143,14 @@ class _EnterNumberState extends State<EnterNumber> {
       // ignore: use_build_context_synchronously
       Navigator.push(context, MaterialPageRoute(builder: (context) {
         return StudentDetails(
-            studentResponse.username!,
-            studentResponse.name!,
-            studentResponse.studentClass!,
-            studentResponse.studentSchool!,
-            studentResponse.guardianName!,
-            studentResponse.guardianPhoneNumber!);
+          studentResponse.username!,
+          studentResponse.name!,
+          studentResponse.studentClass!,
+          studentResponse.studentSchool!,
+          studentResponse.guardianName!,
+          studentResponse.guardianPhoneNumber!,
+          widget.tripId,
+        );
       }));
     }
   }

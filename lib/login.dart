@@ -193,6 +193,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     } else {
       List<Role> roles = loginResponse.roles!;
+      print(roles);
       final prefs = await SharedPreferences.getInstance();
       prefs.setString('name', loginResponse.name!);
       prefs.setString('school', loginResponse.schoolName!);

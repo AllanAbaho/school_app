@@ -20,11 +20,13 @@ class StudentDetails extends StatefulWidget {
     this.className,
     this.school,
     this.parentName,
-    this.parentContact, {
+    this.parentContact,
+    this.tripId, {
     Key? key,
   }) : super(key: key);
 
   final String number, name, className, school, parentName, parentContact;
+  final int tripId;
   @override
   _StudentDetailsState createState() => _StudentDetailsState();
 }
@@ -38,8 +40,9 @@ class _StudentDetailsState extends State<StudentDetails> {
   final parentContactController = TextEditingController();
   BuildContext? loadingContext;
   String successStatus = '';
-  Role? _selectedRole;
-  List<Role> roles = [];
+  String? _selectedRole;
+  List<String> roles = [];
+  String? driverUsername;
 
   @override
   void initState() {
@@ -51,18 +54,33 @@ class _StudentDetailsState extends State<StudentDetails> {
     schoolController.text = widget.school;
     parentNameController.text = widget.parentName;
     parentContactController.text = widget.parentContact;
-    getRoles();
+    checkTripStatus();
   }
 
-  getRoles() async {
-    final prefs = await SharedPreferences.getInstance();
-    var encodedRoles = prefs.getString('roles');
-    var decodedRoles = jsonDecode(encodedRoles!);
-    setState(() {
-      roles = List<Role>.from(decodedRoles.map((x) => Role.fromJson(x)));
-      _selectedRole = roles[0];
-    });
+  checkTripStatus() async {
+    var createTripResponse =
+        await ApiRepository().checkTripStatus(widget.tripId.toString());
+    if (createTripResponse.message == null) {
+      setState(() {
+        roles = createTripResponse.roles!;
+        print(roles);
+        _selectedRole = roles[0];
+      });
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, createTripResponse.message!);
+    }
   }
+
+  // getRoles() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   var encodedRoles = prefs.getString('roles');
+  //   var decodedRoles = jsonDecode(encodedRoles!);
+  //   setState(() {
+  //     roles = List<Role>.from(decodedRoles.map((x) => Role.fromJson(x)));
+  //     _selectedRole = roles[0];
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -186,12 +204,12 @@ class _StudentDetailsState extends State<StudentDetails> {
               ),
               ...roles.map(
                 (role) => ListTile(
-                  title: Text(role.role.replaceAll('_', ' ')),
+                  title: Text(role.replaceAll('_', ' ')),
                   leading: Radio(
                     activeColor: Colors.red,
                     value: role,
                     groupValue: _selectedRole,
-                    onChanged: (Role? value) {
+                    onChanged: (String? value) {
                       setState(() {
                         _selectedRole = value!;
                       });
@@ -279,21 +297,22 @@ class _StudentDetailsState extends State<StudentDetails> {
     var rng = new Random();
     var code = rng.nextInt(900000) + 100000;
     var studentUsername = widget.number;
-    var studentStatus = _selectedRole?.role;
+    var studentStatus = _selectedRole;
     var performedByUsername = prefs.getString('phoneNumber')!;
     var appRef = code.toString();
 
-    print(studentUsername);
-    print(studentStatus);
-    print(performedByUsername);
-    print(appRef);
     loading();
     var studentResponse = await ApiRepository().sendNotificationResponse(
-        studentUsername, studentStatus!, performedByUsername, appRef);
+        widget.tripId,
+        studentUsername,
+        studentStatus!,
+        performedByUsername,
+        appRef);
     Navigator.of(loadingContext!).pop();
     if (studentResponse.message != null) {
       // ignore: use_build_context_synchronously
       showToast(context, studentResponse.message!);
+      print(studentResponse.message);
       return;
     } else {
       // ignore: use_build_context_synchronously

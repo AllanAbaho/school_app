@@ -43,10 +43,15 @@ class ApiRepository {
     return studentResponseFromJson(response.body);
   }
 
-  Future<NotificationResponse> sendNotificationResponse(String studentUsername,
-      String studentStatus, String performedByUsername, String appRef) async {
-    Uri url = Uri.parse("$schoolAPI/send/notification");
+  Future<NotificationResponse> sendNotificationResponse(
+      int tripId,
+      String studentUsername,
+      String studentStatus,
+      String performedByUsername,
+      String appRef) async {
+    Uri url = Uri.parse("$schoolAPI/send/driver/notification");
     var postBody = jsonEncode({
+      "tripId": tripId,
       "studentUsername": studentUsername,
       "studentStatus": studentStatus,
       "performedByUsername": performedByUsername,
@@ -91,8 +96,38 @@ class ApiRepository {
     return tripResponseFromJson(response.body);
   }
 
-  Future<TripResponse> checkTripStatus(String username) async {
-    Uri url = Uri.parse("$schoolAPI/trip/$username");
+  Future<TripResponse> checkTripStatus(String tripId) async {
+    Uri url = Uri.parse("$schoolAPI/trip/$tripId");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization":
+            "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
+      },
+    );
+
+    return tripResponseFromJson(response.body);
+  }
+
+  Future<TripResponse> closeTrip(String tripId) async {
+    Uri url = Uri.parse("$schoolAPI/end/trip/$tripId");
+
+    final response = await http.put(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization":
+            "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
+      },
+    );
+
+    return tripResponseFromJson(response.body);
+  }
+
+  Future<TripResponse> checkDriverStatus(String username) async {
+    Uri url = Uri.parse("$schoolAPI/trip/driver/username/$username");
 
     final response = await http.get(
       url,

@@ -12,9 +12,10 @@ import 'package:school_app/my_theme.dart';
 import 'package:school_app/student_details.dart';
 
 class ScanCode extends StatefulWidget {
-  const ScanCode(this.title, {Key? key}) : super(key: key);
+  const ScanCode(this.title, this.tripId, {Key? key}) : super(key: key);
 
   final String title;
+  final int tripId;
 
   @override
   _ScanCodeState createState() => _ScanCodeState();
@@ -172,7 +173,8 @@ class _ScanCodeState extends State<ScanCode> {
             studentResponse.studentClass!,
             studentResponse.studentSchool!,
             studentResponse.guardianName!,
-            studentResponse.guardianPhoneNumber!);
+            studentResponse.guardianPhoneNumber!,
+            widget.tripId);
       }));
     }
   }

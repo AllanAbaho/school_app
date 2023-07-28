@@ -30,7 +30,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final numberController = TextEditingController();
 
   List<Stat> stats = [];
-  String tripStatus = 'NOT_STARTED';
+  String driverStatus = 'NOT_STARTED';
+  int? tripId;
 
   BuildContext? loadingContext;
 
@@ -41,7 +42,6 @@ class _DashboardPageState extends State<DashboardPage> {
     FlutterNativeSplash.remove();
 
     getPrefs();
-    checkTripStatus();
   }
 
   getPrefs() async {
@@ -52,6 +52,7 @@ class _DashboardPageState extends State<DashboardPage> {
       numberController.text = prefs.getString('phoneNumber')!;
     });
     getStatistics();
+    checkDriverStatus();
   }
 
   @override
@@ -98,18 +99,46 @@ class _DashboardPageState extends State<DashboardPage> {
       // ignore: use_build_context_synchronously
       showToast(context, 'Trip created successfully!');
       setState(() {
-        tripStatus = createTripResponse.tripStatus!;
+        driverStatus = createTripResponse.tripStatus!;
+        tripId = createTripResponse.id!;
       });
     }
   }
 
-  checkTripStatus() async {
+  checkDriverStatus() async {
     var createTripResponse =
-        await ApiRepository().checkTripStatus(numberController.text);
+        await ApiRepository().checkDriverStatus(numberController.text);
     if (createTripResponse.message == null) {
       setState(() {
-        tripStatus = createTripResponse.tripStatus!;
+        driverStatus = createTripResponse.tripStatus!;
+        tripId = createTripResponse.id!;
       });
+      checkTripStatus(tripId.toString());
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, createTripResponse.message!);
+    }
+  }
+
+  checkTripStatus(String id) async {
+    var createTripResponse = await ApiRepository().checkTripStatus(id);
+
+    if (createTripResponse.message == null) {
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, createTripResponse.message!);
+    }
+  }
+
+  closeTrip(String id) async {
+    var createTripResponse = await ApiRepository().closeTrip(id);
+    if (createTripResponse.message == null) {
+      setState(() {
+        driverStatus = createTripResponse.tripStatus!;
+      });
+    } else {
+      // ignore: use_build_context_synchronously
+      showToast(context, createTripResponse.message!);
     }
   }
 
@@ -314,7 +343,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) {
-              return const ScanCode('Scan Code');
+              return ScanCode('Scan Code', tripId!);
             }));
           }),
     );
@@ -337,8 +366,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) {
-              return const EnterNumber(
+              return EnterNumber(
                 title: 'Enter Number',
+                tripId: tripId!,
               );
             }));
           }),
@@ -366,6 +396,27 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Container setUpTrip(BuildContext context) {
+    return Container(
+      height: 45,
+      child: FlatButton(
+          minWidth: MediaQuery.of(context).size.width / 1.09,
+          disabledColor: MyTheme.grey_153,
+          //height: 50,
+          color: Colors.green,
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(6.0))),
+          child: const Text(
+            'Create Trip',
+            style: TextStyle(
+                color: Colors.white, fontSize: 14, fontWeight: FontWeight.w300),
+          ),
+          onPressed: () {
+            _chooseTripTypeDialog();
+          }),
+    );
+  }
+
   Container endTrip(BuildContext context) {
     return Container(
       height: 45,
@@ -381,7 +432,9 @@ class _DashboardPageState extends State<DashboardPage> {
             style: TextStyle(
                 color: Colors.white, fontSize: 14, fontWeight: FontWeight.w300),
           ),
-          onPressed: () {}),
+          onPressed: () async {
+            await closeTrip(tripId.toString());
+          }),
     );
   }
 
@@ -440,7 +493,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
         ),
         Visibility(
-          visible: tripStatus == 'OPEN',
+          visible: driverStatus == 'OPEN',
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 30.0),
             child: Row(
@@ -453,11 +506,11 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         Visibility(
-          visible: tripStatus == 'NOT_STARTED' || tripStatus == 'ENDED',
+          visible: driverStatus == 'NOT_STARTED' || driverStatus == 'ENDED',
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              startTrip(context),
+              setUpTrip(context),
             ],
           ),
         ),
@@ -465,7 +518,7 @@ class _DashboardPageState extends State<DashboardPage> {
           height: 20,
         ),
         Visibility(
-          visible: tripStatus == 'IN_PROGRESS',
+          visible: driverStatus == 'IN_PROGRESS' || driverStatus == 'OPEN',
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
