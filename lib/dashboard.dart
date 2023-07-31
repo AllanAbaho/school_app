@@ -13,6 +13,7 @@ import 'package:school_app/login_response.dart';
 import 'package:school_app/my_theme.dart';
 import 'package:school_app/scan_code.dart';
 import 'package:school_app/statistics_response.dart';
+import 'package:school_app/trip_details.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -111,6 +112,7 @@ class _DashboardPageState extends State<DashboardPage> {
     if (createTripResponse.message == null) {
       setState(() {
         driverStatus = createTripResponse.tripStatus!;
+        print(driverStatus);
         tripId = createTripResponse.id!;
       });
       checkTripStatus(tripId.toString());
@@ -124,18 +126,6 @@ class _DashboardPageState extends State<DashboardPage> {
     var createTripResponse = await ApiRepository().checkTripStatus(id);
 
     if (createTripResponse.message == null) {
-    } else {
-      // ignore: use_build_context_synchronously
-      showToast(context, createTripResponse.message!);
-    }
-  }
-
-  closeTrip(String id) async {
-    var createTripResponse = await ApiRepository().closeTrip(id);
-    if (createTripResponse.message == null) {
-      setState(() {
-        driverStatus = createTripResponse.tripStatus!;
-      });
     } else {
       // ignore: use_build_context_synchronously
       showToast(context, createTripResponse.message!);
@@ -428,12 +418,16 @@ class _DashboardPageState extends State<DashboardPage> {
           shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(6.0))),
           child: const Text(
-            'End Trip',
+            'View Trip',
             style: TextStyle(
                 color: Colors.white, fontSize: 14, fontWeight: FontWeight.w300),
           ),
           onPressed: () async {
-            await closeTrip(tripId.toString());
+            // await closeTrip(tripId.toString());
+            // ignore: use_build_context_synchronously
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return TripDetails(tripId!);
+            }));
           }),
     );
   }
@@ -493,7 +487,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
         ),
         Visibility(
-          visible: driverStatus == 'OPEN',
+          visible: driverStatus == 'IN_PROGRESS' || driverStatus == 'OPEN',
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 30.0),
             child: Row(
