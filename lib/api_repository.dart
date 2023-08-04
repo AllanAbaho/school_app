@@ -4,6 +4,7 @@ import 'package:school_app/apis.dart';
 import 'dart:convert';
 
 import 'package:school_app/login_response.dart';
+import 'package:school_app/school_image_response.dart';
 import 'package:school_app/send_notification.dart';
 import 'package:school_app/statistics_response.dart';
 import 'package:school_app/student_response.dart';
@@ -112,9 +113,9 @@ class ApiRepository {
   }
 
   Future<TripResponse> closeTrip(String tripId) async {
-    Uri url = Uri.parse("$schoolAPI/end/trip/$tripId");
+    Uri url = Uri.parse("$schoolAPI/bulk/school-sign-in/trip/$tripId");
 
-    final response = await http.put(
+    final response = await http.get(
       url,
       headers: {
         "Content-Type": "application/json",
@@ -137,8 +138,6 @@ class ApiRepository {
             "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
       },
     );
-    print(response.body);
-
     return studentsOnTripResponseFromJson(response.body);
   }
 
@@ -155,5 +154,20 @@ class ApiRepository {
     );
 
     return tripResponseFromJson(response.body);
+  }
+
+  Future<SchoolImageResponse> getSchoolImage(String username) async {
+    Uri url = Uri.parse("$schoolAPI/images/$username");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization":
+            "Basic ${base64.encode(utf8.encode('$apiUsername:$apiPassword'))}"
+      },
+    );
+
+    return schoolImageResponseFromJson(response.body);
   }
 }

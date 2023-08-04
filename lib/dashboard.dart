@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,8 +6,6 @@ import 'package:school_app/api_repository.dart';
 import 'package:school_app/app_colors.dart';
 import 'package:school_app/custom_app_bar.dart';
 import 'package:school_app/enter_number.dart';
-import 'package:school_app/input_decorations.dart';
-import 'package:school_app/login_response.dart';
 import 'package:school_app/my_theme.dart';
 import 'package:school_app/scan_code.dart';
 import 'package:school_app/statistics_response.dart';
@@ -33,8 +29,11 @@ class _DashboardPageState extends State<DashboardPage> {
   List<Stat> stats = [];
   String driverStatus = 'NOT_STARTED';
   int? tripId;
+  String imageUrl =
+      'https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image.png';
 
   BuildContext? loadingContext;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -53,7 +52,6 @@ class _DashboardPageState extends State<DashboardPage> {
       numberController.text = prefs.getString('phoneNumber')!;
     });
     getStatistics();
-    checkDriverStatus();
   }
 
   @override
@@ -83,6 +81,16 @@ class _DashboardPageState extends State<DashboardPage> {
         await ApiRepository().getStatistics(numberController.text);
     setState(() {
       stats = statsResponse.stats!;
+    });
+    checkDriverStatus();
+  }
+
+  getImage() async {
+    var imageResponse =
+        await ApiRepository().getSchoolImage(numberController.text);
+    setState(() {
+      imageUrl = imageResponse.fullUrl!;
+      isLoading = false;
     });
   }
 
@@ -120,6 +128,7 @@ class _DashboardPageState extends State<DashboardPage> {
       // ignore: use_build_context_synchronously
       showToast(context, createTripResponse.message!);
     }
+    getImage();
   }
 
   checkTripStatus(String id) async {
@@ -149,14 +158,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   fontSize: 16,
                 ),
               ),
-              Divider(
+              const Divider(
                 color: Color.fromRGBO(133, 186, 51, 1),
               ),
               Column(
                 children: [
                   Row(
                     // ignore: prefer_const_literals_to_create_immutables
-                    children: [
+                    children: const [
                       Flexible(
                         child: Text(
                           'Are you sure you want to log out?',
@@ -168,7 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ],
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   GestureDetector(
@@ -197,7 +206,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             prefs.clear();
                             SystemNavigator.pop();
                           },
-                          child: Text(
+                          child: const Text(
                             'Confirm',
                             style: TextStyle(
                               fontSize: 16,
@@ -304,6 +313,13 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget buildBody() {
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.accent_color,
+        ),
+      );
+    }
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -439,14 +455,10 @@ class _DashboardPageState extends State<DashboardPage> {
         ClipRRect(
           borderRadius: BorderRadius.all(Radius.circular(1000)),
           child: CachedNetworkImage(
-            imageUrl:
-                'https://img.freepik.com/free-vector/gradient-high-school-logo-design_23-2149626932.jpg',
-            fit: BoxFit.cover,
+            imageUrl: imageUrl,
+            fit: BoxFit.contain,
             height: 150,
             width: 150,
-            placeholder: (context, url) => CircularProgressIndicator(
-              color: MyTheme.accent_color,
-            ),
           ),
         ),
         Padding(
@@ -471,21 +483,17 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
-          child: stats.isNotEmpty
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: stats
-                      .map(
-                        (stat) => statistics(
-                            stat.dateCount, stat.role.replaceAll('_', ' ')),
-                      )
-                      .toList(),
-                )
-              : CircularProgressIndicator(
-                  color: MyTheme.accent_color,
-                ),
-        ),
+            padding:
+                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: stats
+                  .map(
+                    (stat) => statistics(
+                        stat.dateCount, stat.role.replaceAll('_', ' ')),
+                  )
+                  .toList(),
+            )),
         Visibility(
           visible: driverStatus == 'IN_PROGRESS' || driverStatus == 'OPEN',
           child: Padding(

@@ -29,6 +29,7 @@ class _TripDetailsState extends State<TripDetails> {
   BuildContext? loadingContext;
   String? driverUsername;
   List<Data>? students = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -39,9 +40,12 @@ class _TripDetailsState extends State<TripDetails> {
 
   getStudentsOnTrip(String id) async {
     var studentsOnTripResponse = await ApiRepository().studentsOnTrip(id);
-    setState(() {
-      students = studentsOnTripResponse.data;
-    });
+    if (studentsOnTripResponse.data != null) {
+      setState(() {
+        students = studentsOnTripResponse.data;
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -59,53 +63,20 @@ class _TripDetailsState extends State<TripDetails> {
   }
 
   Widget buildBody() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            buildDescription('Student Details',
-                description: 'Please make sure these are the correct details'),
-            studentList(),
-            endTrip(context)
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          buildDescription('Student Details',
+              description:
+                  'Please make sure these are the correct students on the trip'),
+          studentList(),
+          Expanded(
+              child: Align(
+                  alignment: Alignment.bottomCenter, child: endTrip(context)))
+        ],
       ),
     );
-  }
-
-  onSubmit() async {
-    final prefs = await SharedPreferences.getInstance();
-    var rng = new Random();
-    var code = rng.nextInt(900000) + 100000;
-    var studentUsername = 'widget.number';
-    var studentStatus = '_selectedRole';
-    var performedByUsername = prefs.getString('phoneNumber')!;
-    var appRef = code.toString();
-
-    loading();
-    var studentResponse = await ApiRepository().sendNotificationResponse(
-        widget.tripId,
-        studentUsername,
-        studentStatus,
-        performedByUsername,
-        appRef);
-    Navigator.of(loadingContext!).pop();
-    if (studentResponse.message != null) {
-      // ignore: use_build_context_synchronously
-      showToast(context, studentResponse.message!);
-      print(studentResponse.message);
-      return;
-    } else {
-      // ignore: use_build_context_synchronously
-      showToast(context, 'Notification sent successfully');
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
-      // ignore: use_build_context_synchronously
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-        return const DashboardPage(title: 'Dashboard');
-      }));
-    }
   }
 
   loading() {
@@ -138,28 +109,33 @@ class _TripDetailsState extends State<TripDetails> {
   }
 
   studentList() {
-    // if (students!.isEmpty) {
-    //   return CircularProgressIndicator();
-    // }
-    return SizedBox(
-      height: 500,
-      child: ListView.builder(
-          itemCount: students!.length,
-          itemBuilder: (BuildContext context, int index) {
-            return CheckboxListTile(
-              title: Text(students![index].studentUsername),
-              secondary: Icon(
-                Icons.person,
-                color: Colors.red,
-              ),
-              value: students![index].checked,
-              onChanged: (value) => setState(() {
-                students![index].checked = !students![index].checked;
-              }),
-              activeColor: Colors.red,
-            );
-          }),
-    );
+    if (isLoading) {
+      return CircularProgressIndicator(
+        color: MyTheme.accent_color,
+      );
+    } else {
+      if (students!.length == 0) {
+        return Text('No students found!');
+      } else {
+        return ListView.builder(
+            itemCount: students!.length,
+            shrinkWrap: true,
+            itemBuilder: (BuildContext context, int index) {
+              return CheckboxListTile(
+                title: Text(students![index].studentUsername),
+                secondary: Icon(
+                  Icons.person,
+                  color: Colors.red,
+                ),
+                value: students![index].checked,
+                onChanged: (value) => setState(() {
+                  students![index].checked = !students![index].checked;
+                }),
+                activeColor: Colors.red,
+              );
+            });
+      }
+    }
   }
 
   Container endTrip(BuildContext context) {
@@ -199,9 +175,6 @@ class _TripDetailsState extends State<TripDetails> {
       // ignore: use_build_context_synchronously
       showToast(context, createTripResponse.message!);
       // ignore: use_build_context_synchronously
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return DashboardPage(title: 'Dashboard');
-      }));
     }
   }
 }
